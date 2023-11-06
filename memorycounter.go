@@ -2,7 +2,7 @@ package rlutil
 
 import (
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jellydator/ttlcache/v3"
@@ -12,15 +12,13 @@ var _ Counter = (*MemoryCounter)(nil)
 
 // MemoryCounter is a sliding window counter implemented with a TTL cache
 type MemoryCounter struct {
-	cache *ttlcache.Cache[string, uint64]
+	cache *ttlcache.Cache[string, *uint64]
 	// windowLen is the length of the sliding window
 	windowLen time.Duration
 	// capacity is the maximum number of items to store in the cache
 	capacity uint64
 	// disableAutoDeleteExpired disables the automatic deletion of expired items
 	disableAutoDeleteExpired bool
-
-	mu sync.Mutex
 }
 
 type MemoryCounterOption func(*MemoryCounter) error
@@ -47,13 +45,13 @@ func NewMemoryCounter(windowLen time.Duration, opts ...MemoryCounterOption) *Mem
 	for _, opt := range opts {
 		opt(c)
 	}
-	ttlOpts := []ttlcache.Option[string, uint64]{
-		ttlcache.WithTTL[string, uint64](windowLen * 2),
+	ttlOpts := []ttlcache.Option[string, *uint64]{
+		ttlcache.WithTTL[string, *uint64](windowLen * 2),
 	}
 	if c.capacity > 0 {
-		ttlOpts = append(ttlOpts, ttlcache.WithCapacity[string, uint64](c.capacity))
+		ttlOpts = append(ttlOpts, ttlcache.WithCapacity[string, *uint64](c.capacity))
 	}
-	cache := ttlcache.New[string, uint64](ttlOpts...)
+	cache := ttlcache.New[string, *uint64](ttlOpts...)
 	c.cache = cache
 	if !c.disableAutoDeleteExpired {
 		go cache.Start()
@@ -68,23 +66,15 @@ func (c *MemoryCounter) Get(key string, window time.Time) (count int, err error)
 	if i == nil {
 		return 0, nil
 	}
-	return int(i.Value()), nil
+	return int(*i.Value()), nil
 }
 
 // Increment increments the count for the given key and window
 func (c *MemoryCounter) Increment(key string, currWindow time.Time) error {
 	key = generateKey(key, currWindow)
-	// Per-key locking is not implemented because it is necessary to lock globally to create per-key locking.
-	c.mu.Lock()
-	i := c.cache.Get(key)
-	var v uint64
-	if i != nil {
-		v = i.Value() + 1
-	} else {
-		v = 1
-	}
-	_ = c.cache.Set(key, v, ttlcache.DefaultTTL)
-	c.mu.Unlock()
+	zero := uint64(0)
+	i, _ := c.cache.GetOrSet(key, &zero)
+	atomic.AddUint64(i.Value(), 1)
 	return nil
 }
 

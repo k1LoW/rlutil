@@ -28,7 +28,8 @@ func TestGet(t *testing.T) {
 
 	t.Run("Get value", func(t *testing.T) {
 		want := 1
-		c.cache.Set(generateKey(key, window), uint64(want), ttlcache.DefaultTTL)
+		v := uint64(want)
+		c.cache.Set(generateKey(key, window), &v, ttlcache.DefaultTTL)
 		got, err := c.Get(key, window)
 		if err != nil {
 			t.Error(err)
