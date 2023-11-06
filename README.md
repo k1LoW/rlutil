@@ -1,0 +1,3 @@
+# rlutil [![Go Reference](https://pkg.go.dev/badge/github.com/k1LoW/rlutil.svg)](https://pkg.go.dev/github.com/k1LoW/rlutil) [![build](https://github.com/k1LoW/rlutil/actions/workflows/ci.yml/badge.svg)](https://github.com/k1LoW/rlutil/actions/workflows/ci.yml) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rlutil/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rlutil/ratio.svg) ![Test Execution Time](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rlutil/time.svg)
+
+Package `rlutil` provides utility functions for [rl](https://github.com/k1LoW/rl)

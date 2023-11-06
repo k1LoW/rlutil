@@ -1,0 +1,44 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+
+      - name: Run lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          fail_on_error: true
+
+      - name: Run gostyle
+        uses: k1LoW/gostyle-action@v1
+        with:
+          config-file: .gostyle.yml
+          fail-on-error: true
+
+      - name: Run tests
+        run: make ci
+
+      # - name: Run benchmark
+      #   run: make benchmark
+
+      - name: Run octocov
+        uses: k1LoW/octocov-action@v0
+        env:
+          OCTOCOV_CUSTOM_METRICS_BENCHMARK: custom_metrics_benchmark.json
