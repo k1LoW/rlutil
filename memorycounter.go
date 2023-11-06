@@ -13,29 +13,25 @@ var _ Counter = (*MemoryCounter)(nil)
 // MemoryCounter is a sliding window counter implemented with a TTL cache
 type MemoryCounter struct {
 	cache *ttlcache.Cache[string, *uint64]
-	// windowLen is the length of the sliding window
-	windowLen time.Duration
 	// capacity is the maximum number of items to store in the cache
 	capacity uint64
 	// disableAutoDeleteExpired disables the automatic deletion of expired items
 	disableAutoDeleteExpired bool
 }
 
-type MemoryCounterOption func(*MemoryCounter) error
+type MemoryCounterOption func(*MemoryCounter)
 
 // MemoryCounterWithCapacity sets the maximum number of items to store in the cache
 func MemoryCounterWithCapacity(capacity uint64) MemoryCounterOption {
-	return func(c *MemoryCounter) error {
+	return func(c *MemoryCounter) {
 		c.capacity = capacity
-		return nil
 	}
 }
 
 // MemoryCounterDisableAutoDeleteExpired disables the automatic deletion of expired items
 func MemoryCounterDisableAutoDeleteExpired() MemoryCounterOption {
-	return func(c *MemoryCounter) error {
+	return func(c *MemoryCounter) {
 		c.disableAutoDeleteExpired = true
-		return nil
 	}
 }
 
@@ -60,7 +56,7 @@ func NewMemoryCounter(windowLen time.Duration, opts ...MemoryCounterOption) *Mem
 }
 
 // Get returns the count for the given key and window
-func (c *MemoryCounter) Get(key string, window time.Time) (count int, err error) {
+func (c *MemoryCounter) Get(key string, window time.Time) (int, error) { //nostyle:getters
 	key = generateKey(key, window)
 	i := c.cache.Get(key)
 	if i == nil {
